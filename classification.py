@@ -36,9 +36,14 @@ range_hist = n_points + 2
 for filepath in tqdm(imgs_train, ncols=80):
     # filepath = imgs_train[1]
     im = cv2.imread(filepath, 1)
-    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    # keep Hue value
+    im_h = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)[:, :, 0]
+    # cv2.imshow('Image', im)
+    # cv2.imshow('Image gray', im_gray)
+    # cv2.imshow('Image H', im_h)
 
-    lbp = local_binary_pattern(im, n_points, radius, 'uniform')
+    lbp = local_binary_pattern(im_h, n_points, radius, 'uniform')
     hist, _ = np.histogram(lbp, density=True, bins=n_bins, range=(0, range_hist))
     X_train.append(hist)
     # cv2.imshow('Features', lbp)
@@ -56,7 +61,7 @@ for filepath in tqdm(imgs_train, ncols=80):
     else:
         y_train.append(1)
 
-    # cv2.waitKey(1)
+    # cv2.waitKey(0)
     # plt.show()
     # cv2.destroyAllWindows()
 
@@ -91,9 +96,11 @@ X_test = []
 y_test = []
 for filepath in tqdm(imgs_test, ncols=80):
     im_clr = cv2.imread(filepath, 1)
-    im = cv2.cvtColor(im_clr, cv2.COLOR_BGR2GRAY)
+    im_gray = cv2.cvtColor(im_clr, cv2.COLOR_BGR2GRAY)
+    # keep Hue value
+    im_h = cv2.cvtColor(im_clr, cv2.COLOR_BGR2HSV)[:, :, 0]
 
-    lbp = local_binary_pattern(im, n_points, radius, 'uniform')
+    lbp = local_binary_pattern(im_h, n_points, radius, 'uniform')
     hist, _ = np.histogram(lbp, density=True, bins=n_bins, range=(0, range_hist))
     X_test.append(hist)
 
