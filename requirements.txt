@@ -1,0 +1,7 @@
+numpy
+matplotlib
+Pillow
+opencv-python
+sklearn
+scikit-image
+yolov5
