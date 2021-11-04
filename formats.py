@@ -21,6 +21,7 @@ def json_2_yolo(path_json, path_data, img_fmt='.png'):
     # read json file
     f = open(path_json, "r")
     annotations = json.loads(f.read())
+    f.close()
 
     for img_filename, boxes in annotations.items():
         print(img_filename)
@@ -33,7 +34,8 @@ def json_2_yolo(path_json, path_data, img_fmt='.png'):
             width, height = im.size
             # create output file
             output_file = open(path_data + os.path.basename(img_filename).split(img_fmt)[0] + '.txt', "w+")
-            # convert bouding box coordinates, Yolo format is [class, x, y, width, height]
+            # convert bouding box coordinates, Yolo format is [class, x, y,
+            # width, height] with all values normalized
             for box in boxes:
                 line = "0 {} {} {} {}\n".format(
                     (box[1] + box[3]) / (2 * height),
