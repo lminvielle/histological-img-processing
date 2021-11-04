@@ -15,6 +15,8 @@ def json_2_yolo(path_json, path_data, img_fmt='.png'):
     Inputs:
         path_json (str): path to json file
         path_dat (str): path to images folder
+    Returns:
+        None
     """
     # read json file
     f = open(path_json, "r")
