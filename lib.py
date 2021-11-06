@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from sklearn import ensemble
 from sklearn.metrics import roc_auc_score, accuracy_score, roc_curve
-from skimage.feature import local_binary_pattern
+from skimage.feature import local_binary_pattern, hog
 from tqdm.auto import tqdm
 
 
@@ -21,7 +21,7 @@ class Data:
     def __init__(self):
         self.train_files = glob.glob(path_data + 'train/nuclei/*.png') + glob.glob(path_data + 'train/no_nuclei/*.png')
         ### JUST TO TEST RAPIDLY ###
-        self.train_files = np.random.choice(self.train_files, size=200, replace=False)
+        self.train_files = list(np.random.choice(self.train_files, size=200, replace=False))
 
         self.test_files = glob.glob(path_data + 'test/nuclei/*.png') + glob.glob(path_data + 'test/no_nuclei/*.png')
 
@@ -40,6 +40,16 @@ class Features:
         self.feat_list = feat_list
         self.feat_params = feat_params
 
+    def preprocess(self, filepath, dim_resize=(256, 256)):
+        im = cv2.imread(filepath, 1)
+        # resize
+        im = cv2.resize(im, dsize=dim_resize, interpolation=cv2.INTER_AREA)
+        # convert to grayscale
+        # im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        # keep Hue value
+        im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)[:, :, 0]
+        return im
+
     def lbp(self, img, **params):
         """
         Returns the Local Binary Patterns of an image.
@@ -52,17 +62,23 @@ class Features:
         hist, _ = np.histogram(lbp, density=True, bins=n_bins, range=(0, range_hist))
         return hist
 
-    def compute(self, files):
+    def hog(self, img, **params):
+        pix_per_cell = params['pixels_per_cell']
+        feat = hog(img, orientations=8, pixels_per_cell=(pix_per_cell, pix_per_cell),
+                   cells_per_block=(1, 1), visualize=False)
+        return feat
+
+    def color_histogram():
+        return 1
+
+    def compute_X(self, files):
         """
-        Returns computes features over a list of image files.
+        Returns features over a list of image files.
         """
         X = []
-        y = []
         for filepath in tqdm(files, ncols=80):
-            im = cv2.imread(filepath, 1)
-            # keep Hue value
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)[:, :, 0]
             features = []
+            im = self.preprocess(filepath)
             for feat_name in self.feat_list:
                 feat_function = getattr(self, feat_name)
                 feature = feat_function(im, **self.feat_params[feat_name])
@@ -74,12 +90,25 @@ class Features:
                     features.append(feature)
 
             X.append(features)
+        return np.array(X)
+
+    def compute_y(self, files):
+        """
+        Returns labels of a list of nuclei image files
+        """
+        y = []
+        for filepath in files:
             if 'no_nuclei' in filepath:
                 y.append(0)
             else:
                 y.append(1)
+        return np.array(y)
 
-        return (np.array(X), np.array(y))
+    def compute_Xy(self, files):
+        """
+        """
+        print("Compute features...")
+        return(self.compute_X(files), self.compute_y(files))
 
 
 class Metrics:
@@ -90,9 +119,6 @@ class Metrics:
         """
         Computes the aera under the ROC curve
         """
-        if not self.is_fitted:
-            print("Model is not fitted yet !")
-            return 0
         self.roc_auc_ = roc_auc_score(y_true, y_pred)
         return self.roc_auc_
 
@@ -120,7 +146,23 @@ class Plots:
             return 0
         feat_imp = self.model.feature_importances_
         fig, ax = plt.subplots(num="Feature importance")
+        ax.bar()
         plt.show()
+
+    def plot_classification_results(self, files, y_true, y_pred, class_names=None):
+        """
+        y_pred must be of ints (not probabilities)
+        """
+        for i_file, filepath in enumerate(files):
+            y_pred[i_file]
+            truth_str = "Truth: {}".format(class_names[y_true[i_file]])
+            predict_str = "Predicted: {}".format(class_names[y_pred[i_file]])
+            im = cv2.imread(filepath, 1)
+            cv2.putText(im, truth_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 80, 0), 2)
+            cv2.putText(im, predict_str, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (20, 180, 0), 2)
+            cv2.imshow("Prediction", im)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
 
 class ClassificationModel(Metrics, Plots):
@@ -155,6 +197,9 @@ class ClassificationModel(Metrics, Plots):
         """
         Returns the model prediction over input data.
         """
+        if not self.is_fitted:
+            print("Model is not fitted yet !")
+            return 0
         if self.n_classes == 2:
             return self.model.predict_proba(X)[:, 1]
         else:
@@ -165,20 +210,10 @@ if __name__ == '__main__':
     my_data = Data()
     train_files, test_files = my_data.load()
 
-    feat_list = ['lbp']
-    feat_params = {
-        'lbp': {'radius': 3}
-    }
-    features = Features(feat_list, feat_params)
-    X_train, y_train = features.compute(train_files)
-    X_test, y_test = features.compute(test_files)
-    clf_model = ClassificationModel('rf')
-    clf_model.fit(X_train, y_train)
-
-    y_pred = clf_model.predict_proba(X_train)
-    score = clf_model.roc_auc(y_train, y_pred)
-    print("ROC AUC score train: {}".format(score))
-    y_pred = clf_model.predict_proba(X_test)
-    score = clf_model.roc_auc(y_test, y_pred)
-    print("ROC AUC score test: {}".format(score))
-    clf_model.plot_roc(y_test, y_pred)
+    image = cv2.imread(train_files[0], 1)
+    feat, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
+                            cells_per_block=(1, 1), visualize=True)
+    cv2.imshow('im', image)
+    cv2.imshow('hog', hog_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
