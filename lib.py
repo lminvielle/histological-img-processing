@@ -21,7 +21,7 @@ class Data:
     def __init__(self):
         self.train_files = glob.glob(path_data + 'train/nuclei/*.png') + glob.glob(path_data + 'train/no_nuclei/*.png')
         ### JUST TO TEST RAPIDLY ###
-        self.train_files = list(np.random.choice(self.train_files, size=200, replace=False))
+        # self.train_files = list(np.random.choice(self.train_files, size=200, replace=False))
 
         self.test_files = glob.glob(path_data + 'test/nuclei/*.png') + glob.glob(path_data + 'test/no_nuclei/*.png')
 
@@ -36,18 +36,24 @@ class Features:
     Features for image processing.
     """
 
-    def __init__(self, feat_list, feat_params):
+    def __init__(self, feat_list, feat_params, preprocess_params):
         self.feat_list = feat_list
         self.feat_params = feat_params
+        self.preprocess_params = preprocess_params
 
-    def preprocess(self, filepath, dim_resize=(256, 256)):
+    def preprocess(self, filepath, **params):
+        dim_resize = params['dim_resize']
         im = cv2.imread(filepath, 1)
         # resize
         im = cv2.resize(im, dsize=dim_resize, interpolation=cv2.INTER_AREA)
-        # convert to grayscale
-        # im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-        # keep Hue value
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)[:, :, 0]
+        if params['convert'] == 'to_gray':
+            # convert to grayscale
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        elif params['convert'] == 'to_H':
+            # keep Hue value
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)[:, :, 0]
+        elif params['convert']:
+            raise ValueError("param 'convert' unknown")
         return im
 
     def lbp(self, img, **params):
@@ -63,13 +69,26 @@ class Features:
         return hist
 
     def hog(self, img, **params):
+        """
+        Returns the Histogram of Gradient of an input image
+        """
         pix_per_cell = params['pixels_per_cell']
         feat = hog(img, orientations=8, pixels_per_cell=(pix_per_cell, pix_per_cell),
                    cells_per_block=(1, 1), visualize=False)
         return feat
 
-    def color_histogram():
-        return 1
+    def color_hist(self, img, **params):
+        """
+        """
+        bins = params['bins']
+        if img.ndim == 3:
+            hist = []
+            for clr_dim in range(img.shape[2]):
+                hist_i, _ = np.histogram(img[:, :, clr_dim].ravel(), bins=bins, density=True)
+                hist += list(hist_i)
+            return np.array(hist)
+        else:
+            return np.histogram(img.ravel(), bins=bins, density=True)[0]
 
     def compute_X(self, files):
         """
@@ -78,7 +97,7 @@ class Features:
         X = []
         for filepath in tqdm(files, ncols=80):
             features = []
-            im = self.preprocess(filepath)
+            im = self.preprocess(filepath, **self.preprocess_params)
             for feat_name in self.feat_list:
                 feat_function = getattr(self, feat_name)
                 feature = feat_function(im, **self.feat_params[feat_name])
@@ -130,7 +149,8 @@ class Metrics:
 class Plots:
     """
     """
-    def plot_roc(self, y_true, y_pred):
+
+    def plot_roc(self, y_true, y_pred, features, show=True, save=False, path_save=None, return_outputs=False):
         fpr, tpr, _ = roc_curve(y_true, y_pred, drop_intermediate=False)
         fig, ax = plt.subplots(num="ROC curve")
         self.roc_auc(y_true, y_pred)
@@ -138,7 +158,14 @@ class Plots:
         ax.set_xlabel('False positive rate')
         ax.set_ylabel('True positive rate')
         ax.legend(loc="lower right")
-        plt.show()
+        if show:
+            plt.show()
+        if save:
+            name_save = "ROC_{}_{}".format(features.preprocess_params['convert'], '-'.join(features.feat_list))
+            print('saving figure to:', path_save + name_save)
+            fig.savefig(path_save + name_save + '.pdf')
+        if return_outputs:
+            return (fpr, tpr)
 
     def plot_feat_imp(self):
         if not self.model_name == 'rf':
@@ -212,8 +239,31 @@ if __name__ == '__main__':
 
     image = cv2.imread(train_files[0], 1)
     feat, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
-                            cells_per_block=(1, 1), visualize=True)
+                          cells_per_block=(1, 1), visualize=True)
+    # channels = [0, 1, 2]
+    # histsize = [25, 25, 25]
+    # ranges = [0, 256]
+    # clr_hist = cv2.calcHist(image, channels, mask=None, histSize=histsize, ranges=ranges)
+    # hist, _ = np.histogram(image[:, :, 0].ravel(), bins=20, range=None, normed=None, weights=None, density=True)
+    # fig, ax = plt.subplots()
+    # ax.hist(image[:, :, 0].ravel(), bins=20, density=True)
+    # plt.show()
+    feat_list = [
+        # 'lbp',
+        # 'hog',
+        'color_hist',
+    ]
+    feat_params = {
+        # 'lbp': {'radius': 3},
+        # 'hog': {'pixels_per_cell': 16},
+        'color_hist': {'bins': 20},
+    }
+    feat = Features(feat_list, feat_params)
+    clr_hist = feat.color_hist(image, bins=20)
+    fig, ax = plt.subplots()
+    ax.bar(np.arange(clr_hist.shape[0]), height=clr_hist)
+    plt.show()
     cv2.imshow('im', image)
-    cv2.imshow('hog', hog_image)
+    # cv2.imshow('hog', hog_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
