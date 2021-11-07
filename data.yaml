@@ -1,4 +1,0 @@
-train: "../data/localization/train/"
-val: "../data/localization/test/"
-nc: 1
-names: ['nuclei']
