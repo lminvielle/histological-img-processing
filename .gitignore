@@ -1,4 +1,4 @@
 **/*.swp
 **/*.pt
 **/*.pdf
-runs
+code/localization/runs/
