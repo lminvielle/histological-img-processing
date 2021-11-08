@@ -1,5 +1,8 @@
 import os
+import glob
 import json
+import cv2
+
 from PIL import Image
 
 
@@ -47,9 +50,38 @@ def json_2_yolo(path_json, path_data, img_fmt='.png'):
             output_file.close()
 
 
+def convert_color(path_in, path_out, conversion, fmt='.png'):
+    """
+    Converts all images of a folder to another color or colorspace
+    """
+    img_files = glob.glob(path_in + '/*' + fmt)
+    # print(img_files)
+    # creating output folder
+    if not os.path.exists(path_out):
+        print("Creating output folder")
+        os.makedirs(path_out)
+    for filepath in img_files:
+        img = cv2.imread(filepath, 1)
+        if conversion == 'HSV':
+            # convert to HSV
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        elif conversion == 'H':
+            # keep Hue value
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)[:, :, 0]
+        elif conversion == 'gray':
+            # convert to grayscale
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        elif conversion:  # unknwon parameter convert
+            raise ValueError("param unknown: {}".format(conversion))
+        cv2.imwrite(path_out + os.path.basename(filepath), img)
+
+
 if __name__ == '__main__':
-    # path_json = "../data/localization/boxes_train.json"
-    # path_data = "../data/localization/train/"
-    path_json = "../data/localization/boxes_test.json"
-    path_data = "../data/localization/test/"
-    json_2_yolo(path_json, path_data, img_fmt='.png')
+    # path_json = "../../../data/localization/boxes_train.json"
+    # path_data = "../../../data/localization/train/"
+    # path_json = "../../../data/localization/boxes_test.json"
+    # path_data = "../../../data/localization/test/"
+    # json_2_yolo(path_json, path_data, img_fmt='.png')
+    path_data = "../../../data/localization/test/"
+    path_out = "../../../data/localization/test/HSV/"
+    convert_color(path_data, path_out, 'HSV')
