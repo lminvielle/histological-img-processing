@@ -1,4 +1,5 @@
 **/*.swp
 **/*.pt
 **/*.pdf
+**/*.png
 code/localization/runs/
