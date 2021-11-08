@@ -8,20 +8,20 @@ from lib import ClassificationModel, Data, Features
 # =======================================================
 # features params
 feat_list = [
-    'lbp',
+    # 'lbp',
     # 'hog',
-    # 'color_hist',
+    'color_hist',
 ]
 feat_params = {
-    'lbp': {'radius': 3, 'color': 'H'},
-    'hog': {'pixels_per_cell': 16, 'color': 'H'},
-    'color_hist': {'bins': 20, 'color': 'BGR'},
+    # 'lbp': {'radius': 3, 'color': 'H'},
+    # 'hog': {'pixels_per_cell': 16, 'color': 'H'},
+    'color_hist': {'bins': 20, 'color': 'HSV'},
 }
 # preprocessing
 preprocess_params = {
     'dim_resize': (256, 256),
 }
-path_save = '../outputs/classification/'
+path_save = '../../outputs/classification/'
 
 # =======================================================
 #   Processing
@@ -48,7 +48,7 @@ print("ROC AUC score test: {}".format(score))
 score = clf_model.accuracy(y_test, y_pred > 0.5)
 print("Accuracy test: {}".format(score))
 # roc curve
-clf_model.plot_roc(y_test, y_pred, features, show=True, save=False, path_save=path_save)
+clf_model.plot_roc(y_test, y_pred, features, show=False, save=False, path_save=path_save + '/rocs/')
 
-# plot results
-# clf_model.plot_classification_results(test_files, y_test, y_pred > 0.5, class_names=['NO_nuclei', 'Nuclei'])
+# plot results on images
+clf_model.plot_classification_results(test_files, y_test, y_pred > 0.5, class_names=['NO_nuclei', 'Nuclei'], show=False, save=True, path_save=path_save + '/images/')

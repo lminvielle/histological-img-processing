@@ -1,3 +1,4 @@
+import os
 import cv2
 import glob
 
@@ -10,7 +11,7 @@ from skimage.feature import local_binary_pattern, hog
 from tqdm.auto import tqdm
 
 
-path_data = '../data/classification/'
+path_data = '../../../data/classification/'
 
 
 class Data:
@@ -20,10 +21,12 @@ class Data:
 
     def __init__(self):
         self.train_files = glob.glob(path_data + 'train/nuclei/*.png') + glob.glob(path_data + 'train/no_nuclei/*.png')
-        ### JUST TO TEST RAPIDLY ###
+        ### JUST TO TEST RAPIDLY (Comment out for normal use) ###
         # self.train_files = list(np.random.choice(self.train_files, size=200, replace=False))
 
         self.test_files = glob.glob(path_data + 'test/nuclei/*.png') + glob.glob(path_data + 'test/no_nuclei/*.png')
+        if len(self.train_files) == 0:
+            raise FileNotFoundError("No image found in path")
 
     def load(self):
         """
@@ -66,6 +69,7 @@ class Features:
         """
         if conversion == 'HSV':
             # convert to HSV
+            # print('hsv')
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         elif conversion == 'H':
             # keep Hue value
@@ -112,6 +116,10 @@ class Features:
     def color_hist(self, img, **params):
         """
         """
+        # convert only if not BGR wanted
+        if params['color'] and params['color'] != 'BGR':
+            img = self.convert(img, params['color'])
+        # hist params
         bins = params['bins']
         if img.ndim == 3:
             hist = []
@@ -211,20 +219,32 @@ class Plots:
         ax.bar()
         plt.show()
 
-    def plot_classification_results(self, files, y_true, y_pred, class_names=None):
+    def plot_classification_results(self, files, y_true, y_pred, class_names=None, show=True, save=False, path_save=None):
         """
         y_pred must be of ints (not probabilities)
         """
         for i_file, filepath in enumerate(files):
-            y_pred[i_file]
             truth_str = "Truth: {}".format(class_names[y_true[i_file]])
             predict_str = "Predicted: {}".format(class_names[y_pred[i_file]])
+            if y_pred[i_file] != y_true[i_file]:
+                is_wrong = True
+                color = (20, 20, 200)
+            else:
+                is_wrong = False
+                color = (20, 180, 0)
+
             im = cv2.imread(filepath, 1)
             cv2.putText(im, truth_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 80, 0), 2)
-            cv2.putText(im, predict_str, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (20, 180, 0), 2)
-            cv2.imshow("Prediction", im)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            cv2.putText(im, predict_str, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            if show:
+                cv2.imshow("Prediction", im)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+            if save:
+                name_save = os.path.basename(filepath).split('.png')[0] + ('_WRONG' if is_wrong else '_ok') + '.png'
+                # print('name_save: ', name_save)
+
+                cv2.imwrite(path_save + name_save, im)
 
 
 class ClassificationModel(Metrics, Plots):
