@@ -2,11 +2,17 @@ import os
 import glob
 import json
 import cv2
+import matplotlib
+matplotlib.use('tkagg')  # not use PyQt for matplotlib
+
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from PIL import Image
 
 
 files_to_ignore = ["patch_33796d37f9186dc8e9510a5c5936deca_X20.0.png"]
+path_models = 'runs/train/'
 
 
 def json_2_yolo(path_json, path_data, img_fmt='.png'):
@@ -76,12 +82,40 @@ def convert_color(path_in, path_out, conversion, fmt='.png'):
         cv2.imwrite(path_out + os.path.basename(filepath), img)
 
 
+def plot_results(model_name=None, show=True, save=False, path_save=None):
+    """
+    """
+    fig, ax = plt.subplots(2, 5, figsize=(12, 6), tight_layout=True)
+    ax = ax.ravel()
+    results_path = path_models + model_name + '/results.csv'
+    data = pd.read_csv(results_path)
+    metric_names = [x.strip() for x in data.columns]
+    print("Best mAP:", data.loc[:, '     metrics/mAP_0.5'].max())
+    x = data.values[:, 0]
+    for i, j in enumerate([1, 2, 3, 4, 5, 8, 9, 10, 6, 7]):
+        y = data.values[:, j]
+        ax[i].plot(x, y, marker='.', linewidth=2, markersize=8)
+        ax[i].set_title(metric_names[j], fontsize=12)
+        ax[i].grid()
+    plt.grid()
+    if show:
+        plt.show()
+    if save:
+        fullpath_save = path_save + '/plots/' + model_name + '_results.pdf'
+        print("Saving fig at: {}".format(fullpath_save))
+        fig.savefig(fullpath_save)
+    return data
+
+
 if __name__ == '__main__':
-    # path_json = "../../../data/localization/boxes_train.json"
-    # path_data = "../../../data/localization/train/"
-    # path_json = "../../../data/localization/boxes_test.json"
-    # path_data = "../../../data/localization/test/"
-    # json_2_yolo(path_json, path_data, img_fmt='.png')
+    path_json = "../../../data/localization/boxes_train.json"
+    path_data = "../../../data/localization/train/"
+    path_data_convert = "../../../data/localization/train_HSV/"
+
+    path_json = "../../../data/localization/boxes_test.json"
     path_data = "../../../data/localization/test/"
-    path_out = "../../../data/localization/test/HSV/"
-    convert_color(path_data, path_out, 'HSV')
+    path_data_convert = "../../../data/localization/test_HSV/"
+
+    # convert_color(path_data, path_data_convert, 'HSV')
+
+    json_2_yolo(path_json, path_data_convert, img_fmt='.png')
