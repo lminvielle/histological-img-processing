@@ -1,20 +1,19 @@
-# import matplotlib
-# matplotlib.use('tkagg')  # do not use PyQt for matplotlib
-
 from lib import ClassificationModel, Data, Features
 
 # =======================================================
 #   Params
 # =======================================================
-# features params
+# Features
+# select here the features to be used. one or several can be used
 feat_list = [
     # 'lbp',
     # 'hog',
     'color_hist',
 ]
+# feature params
 feat_params = {
-    # 'lbp': {'radius': 3, 'color': 'H'},
-    # 'hog': {'pixels_per_cell': 16, 'color': 'H'},
+    'lbp': {'radius': 3, 'color': 'H'},
+    'hog': {'pixels_per_cell': 16, 'color': 'H'},
     'color_hist': {'bins': 20, 'color': 'HSV'},
 }
 # preprocessing
@@ -36,7 +35,7 @@ X_test, y_test = features.compute_Xy(test_files)
 # fit model on train set
 clf_model = ClassificationModel('rf')
 clf_model.fit(X_train, y_train)
-# compute results
+# Compute results
 # on train set
 y_pred = clf_model.predict_proba(X_train)
 score = clf_model.roc_auc(y_train, y_pred)
@@ -47,8 +46,8 @@ score = clf_model.roc_auc(y_test, y_pred)
 print("ROC AUC score test: {}".format(score))
 score = clf_model.accuracy(y_test, y_pred > 0.5)
 print("Accuracy test: {}".format(score))
-# roc curve
-clf_model.plot_roc(y_test, y_pred, features, show=False, save=False, path_save=path_save + '/rocs/')
+# plot roc curve and save it
+clf_model.plot_roc(y_test, y_pred, features, show=True, save=True, path_save=path_save + '/rocs/')
 
-# plot results on images
+# draw results on test images and save them
 clf_model.plot_classification_results(test_files, y_test, y_pred > 0.5, class_names=['NO_nuclei', 'Nuclei'], show=False, save=True, path_save=path_save + '/images/')

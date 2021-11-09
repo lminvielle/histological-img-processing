@@ -21,8 +21,6 @@ class Data:
 
     def __init__(self):
         self.train_files = glob.glob(path_data + 'train/nuclei/*.png') + glob.glob(path_data + 'train/no_nuclei/*.png')
-        ### JUST TO TEST RAPIDLY (Comment out for normal use) ###
-        # self.train_files = list(np.random.choice(self.train_files, size=200, replace=False))
 
         self.test_files = glob.glob(path_data + 'test/nuclei/*.png') + glob.glob(path_data + 'test/no_nuclei/*.png')
         if len(self.train_files) == 0:
@@ -210,14 +208,14 @@ class Plots:
         if return_outputs:
             return (fpr, tpr)
 
-    def plot_feat_imp(self):
-        if not self.model_name == 'rf':
-            print("Cannot compute feature importance with this type of classifier !")
-            return 0
-        feat_imp = self.model.feature_importances_
-        fig, ax = plt.subplots(num="Feature importance")
-        ax.bar()
-        plt.show()
+    # def plot_feat_imp(self):
+        # if not self.model_name == 'rf':
+            # print("Cannot compute feature importance with this type of classifier !")
+            # return 0
+        # feat_imp = self.model.feature_importances_
+        # fig, ax = plt.subplots(num="Feature importance")
+        # ax.bar()
+        # plt.show()
 
     def plot_classification_results(self, files, y_true, y_pred, class_names=None, show=True, save=False, path_save=None):
         """
@@ -286,44 +284,3 @@ class ClassificationModel(Metrics, Plots):
             return self.model.predict_proba(X)[:, 1]
         else:
             return self.model.predict_proba(X)
-
-
-if __name__ == '__main__':
-    my_data = Data()
-    train_files, test_files = my_data.load()
-
-    image = cv2.imread(train_files[0], 1)
-    feat, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
-                          cells_per_block=(1, 1), visualize=True)
-    # channels = [0, 1, 2]
-    # histsize = [25, 25, 25]
-    # ranges = [0, 256]
-    # clr_hist = cv2.calcHist(image, channels, mask=None, histSize=histsize, ranges=ranges)
-    # hist, _ = np.histogram(image[:, :, 0].ravel(), bins=20, range=None, normed=None, weights=None, density=True)
-    # fig, ax = plt.subplots()
-    # ax.hist(image[:, :, 0].ravel(), bins=20, density=True)
-    # plt.show()
-    feat_list = [
-        # 'lbp',
-        'hog',
-        'color_hist',
-    ]
-    feat_params = {
-        # 'lbp': {'radius': 3},
-        'hog': {'pixels_per_cell': 16},
-        'color_hist': {'bins': 20},
-    }
-    preprocess_params = {
-        'dim_resize': (256, 256),
-    }
-    feat = Features(feat_list, feat_params, preprocess_params)
-    name_save = feat.get_name_save()
-    print('name_save', name_save)
-    clr_hist = feat.color_hist(image, bins=20)
-    fig, ax = plt.subplots()
-    ax.bar(np.arange(clr_hist.shape[0]), height=clr_hist)
-    plt.show()
-    cv2.imshow('im', image)
-    # cv2.imshow('hog', hog_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()

@@ -105,17 +105,3 @@ def plot_results(model_name=None, show=True, save=False, path_save=None):
         print("Saving fig at: {}".format(fullpath_save))
         fig.savefig(fullpath_save)
     return data
-
-
-if __name__ == '__main__':
-    path_json = "../../../data/localization/boxes_train.json"
-    path_data = "../../../data/localization/train/"
-    path_data_convert = "../../../data/localization/train_HSV/"
-
-    path_json = "../../../data/localization/boxes_test.json"
-    path_data = "../../../data/localization/test/"
-    path_data_convert = "../../../data/localization/test_HSV/"
-
-    # convert_color(path_data, path_data_convert, 'HSV')
-
-    json_2_yolo(path_json, path_data_convert, img_fmt='.png')
