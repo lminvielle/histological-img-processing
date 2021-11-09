@@ -58,7 +58,16 @@ def json_2_yolo(path_json, path_data, img_fmt='.png'):
 
 def convert_color(path_in, path_out, conversion, fmt='.png'):
     """
-    Converts all images of a folder to another color or colorspace
+    Converts all images of a folder to another color or colorspace.
+    If needed will create a folder a save converted images into it.
+
+    Inputs:
+        path_in (str): path of input images
+        path_out (str): path for output images
+        converison (str): required conversion (possible values: 'H', 'HSV', 'gray')
+        fmt (str): input image format
+    Returns:
+        None
     """
     img_files = glob.glob(path_in + '/*' + fmt)
     # print(img_files)
@@ -84,14 +93,25 @@ def convert_color(path_in, path_out, conversion, fmt='.png'):
 
 def plot_results(model_name=None, show=True, save=False, path_save=None):
     """
+    Plot results of Yolo model. Will plot a subplots of losses and metrics along epochs.
+
+    Inputs:
+        model_name (str): Yolo model name
+        show (bool): if True, will show output results
+        save (bool): if True, will save output plot to path_save
+        path_save (str): path to save plot
+    Returns:
+        None
     """
     fig, ax = plt.subplots(2, 5, figsize=(12, 6), tight_layout=True)
     ax = ax.ravel()
     results_path = path_models + model_name + '/results.csv'
+    # load results
     data = pd.read_csv(results_path)
     metric_names = [x.strip() for x in data.columns]
     print("Best mAP:", data.loc[:, '     metrics/mAP_0.5'].max())
     x = data.values[:, 0]
+    # plot
     for i, j in enumerate([1, 2, 3, 4, 5, 8, 9, 10, 6, 7]):
         y = data.values[:, j]
         ax[i].plot(x, y, marker='.', linewidth=2, markersize=8)

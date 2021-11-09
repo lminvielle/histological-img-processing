@@ -13,7 +13,7 @@ from lib import json_2_yolo, convert_color, plot_results
 # =======================================================
 path_data = '../../../data/localization/'
 
-PREP_DATA = 0
+PREP_DATA = 0  # set to 1 to prepare data for Yolo training
 
 TRAIN = 0  # set to 1 to launch testing
 # train params
