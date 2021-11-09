@@ -47,7 +47,9 @@ if TRAIN:
 
 if TEST:
     # plot results
-    data = plot_results(model_name, show=1, save=1, path_save=path_save)
+    # comment out the plot_results if you never trained the model locally (and
+    # you downloaded the weights from elsewhere)
+    # data = plot_results(model_name, show=1, save=1, path_save=path_save)
 
     # test image set
     files_test = glob.glob(path_imgs + '*.png')
@@ -70,7 +72,6 @@ if TEST:
     for filename, im, predictions in zip(results.files, results.imgs, results.pred):
         # yolo puts 'jpg' to results filenames: get it back to png
         filename = filename.replace('.jpg', '.png')
-        print(filename)
         # convert back to RGB if necessary
         if 'HSV' in model_name:
             # print('convert')
@@ -87,9 +88,7 @@ if TEST:
         predictions = predictions.detach().to('cpu').numpy()
         for i in range(predictions.shape[0]):
             im_pred = cv2.rectangle(im_pred, tuple(predictions[i, [0, 1]].astype(int)), tuple(predictions[i, [2, 3]].astype(int)), color_pred, 1)
+        # save
         cv2.imwrite(path_save + '/images/' + filename, im)
         cv2.imwrite(path_save + '/images/' + os.path.basename(filename).replace('.png', '_pred.png'), im_pred)
-        # cv2.imshow('Ground Truth', im)
-        # cv2.imshow('Prediction', im_pred)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows
+    print("saved prediction at {}".format(path_save + '/images/'))

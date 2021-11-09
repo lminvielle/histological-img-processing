@@ -4,7 +4,8 @@ from lib import ClassificationModel, Data, Features
 #   Params
 # =======================================================
 # Features
-# select here the features to be used. one or several can be used
+# select here the features to be used. one or several can be used (comment out
+# the one you wish to use)
 feat_list = [
     # 'lbp',
     # 'hog',
