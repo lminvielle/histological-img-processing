@@ -45,10 +45,10 @@ all results and weights.
 **Avoiding training**:
 Since the training can take quite some time, a weight file (named _best.pt_) corresponding to Yolo
 size L trained over RGB images is available [here](https://drive.google.com/file/d/1usxGy7x4s5XRdzY1pvKDUlSZ-sOSok-O/view?usp=sharing).
-Place it in **runs/train/sizeL\_clrRGB/weights**
-The command line to create the whole path is `mkdir -p runs/train/sizeL_clrRGB/weights` (to be run from folder **localization**).
-In this case, you can skip data preparation and training and directly execute
-the testing part of the script.
+Place it in **runs/train/sizeL\_clrRGB/weights/**.
+In case, the command line to create the whole path is `mkdir -p runs/train/sizeL_clrRGB/weights` (to be run from folder **localization**).
+In this case, you can skip Data preparation and Training and directly execute
+the Testing part of the script.
 
 - Testing
 
